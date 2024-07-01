@@ -1,0 +1,7 @@
+*.xlsx
+*.csv
+*.pdf
+.DS_STORE
+daochu
+*.xls
+.vscode

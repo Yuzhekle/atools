@@ -1,0 +1,58 @@
+{
+    "req": {
+        "timestamp": 1697794480,
+        "partnerID": 1,
+        "sign": "sign-test",
+        "hotelCodeList": [
+            "123456"
+        ],
+        "startDate": "2023-01-01",
+        "endDate": "2023-01-02",
+        "adultCount": 2,
+        "roomCount": 1
+    },
+    "res": {
+        "data": {
+            "hotels": [
+                {
+                    "hotelCode": "test-hotel-code",
+                    "rates": [
+                        {
+                            "roomName": "room1",
+                            "roomNameCN": "",
+                            "roomTypeCode": "123456",
+                            "ratePlanCode": "12222",
+                            "ratePlanName": "plan1",
+                            "rateCode": "rate-code",
+                            "occupancy": 0,
+                            "currency": "CNY",
+                            "totalPrice": 100,
+                            "dailyRates": [
+                                {
+                                    "stayDate": "2023-01-01",
+                                    "netRate": 50,
+                                    "inventoryCount": 10
+                                }
+                            ],
+                            "cancellationPolicies": [
+                                {
+                                    "advancedHour": 24,
+                                    "chargeAmount": 100,
+                                    "currencyCode": "CNY",
+                                    "cancellationDesc": "cancellation desc"
+                                }
+                            ],
+                            "breakfastCount": 0,
+                            "bedTypeDesc": "bed type desc",
+                            "bedTypeDescCN": "",
+                            "inventoryCount": 10
+                        }
+                    ]
+                }
+            ]
+        },
+        "errorCode": "",
+        "errorMsg": "",
+        "success": true
+    }
+}
