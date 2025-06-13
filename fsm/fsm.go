@@ -54,6 +54,12 @@ type EventProcessor interface {
 	EnterNewState(to State, event Event) error
 }
 
+// 默认处理器实现，所有方法为空操作
+type defaultProcessor struct{}
+
+func (d *defaultProcessor) ExitOldState(from, to State) error         { return nil }
+func (d *defaultProcessor) EnterNewState(to State, event Event) error { return nil }
+
 // 每个状态机都需要定义一个默认的处理器 Processor，并且每个转变器 Transition 也可以自定义自己的处理器，注意，状态机和转变器的 处理器不是覆盖关系，而是先后执行的关系。
 type StateMachine struct {
 	locker    sync.Mutex     // 排他锁
@@ -63,6 +69,7 @@ type StateMachine struct {
 
 func NewStateMachine() *StateMachine {
 	return &StateMachine{
+		Processor: &defaultProcessor{}, // 设置默认处理器
 		Graph: &StateGraph{
 			states:      make(map[State]string),
 			transitions: make(map[State]map[Event]Transition),
@@ -96,7 +103,10 @@ func (s *StateMachine) SetTransitions(transitions map[State]map[Event]Transition
 }
 
 func (s *StateMachine) GetStateDesc(state State) string {
-	return fmt.Sprintf("%s(%d)", s.Graph.states[state], state)
+	if desc, ok := s.Graph.states[state]; ok {
+		return fmt.Sprintf("%s(%d)", desc, state)
+	}
+	return fmt.Sprintf("未知状态(%d)", state)
 }
 
 /** 状态机 StateMachine 核心方法
@@ -130,18 +140,28 @@ func (s *StateMachine) Run(from State, event Event) (State, error) {
 	defer s.locker.Unlock()
 
 	// 执行状态机处理器，退出旧状态
-	_ = s.Processor.ExitOldState(from, to)
+	if err := s.Processor.ExitOldState(from, to); err != nil {
+		return 0, fmt.Errorf("状态机处理器退出旧状态失败: %w", err)
+	}
 	// 如果当前转变器设置了处理器，则执行处理器的退出旧状态
 	if transition.Processor != nil {
-		_ = transition.Processor.ExitOldState(from, to)
+		if err := transition.Processor.ExitOldState(from, to); err != nil {
+			return 0, fmt.Errorf("转变器处理器退出旧状态失败: %w", err)
+		}
 	}
 	// 执行转变器动作
-	_ = transition.Action(from, event, to)
-	// 执行转变器处理器，进入新状态的方法
-	_ = s.Processor.EnterNewState(to, event)
+	if err := transition.Action(from, event, to); err != nil {
+		return 0, fmt.Errorf("转变器动作执行失败: %w", err)
+	}
+	// 执行状态机处理器，进入新状态的方法
+	if err := s.Processor.EnterNewState(to, event); err != nil {
+		return 0, fmt.Errorf("状态机处理器进入新状态失败: %w", err)
+	}
 	// 如果当前转变器设置了处理器，则执行处理器的进入新状态的方法
 	if transition.Processor != nil {
-		_ = transition.Processor.EnterNewState(to, event)
+		if err := transition.Processor.EnterNewState(to, event); err != nil {
+			return 0, fmt.Errorf("转变器处理器进入新状态失败: %w", err)
+		}
 	}
 	return to, nil
 }
